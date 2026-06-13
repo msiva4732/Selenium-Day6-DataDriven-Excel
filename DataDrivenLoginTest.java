@@ -10,14 +10,14 @@ import java.io.IOException;
 import java.time.Duration;
 
 public class DataDrivenLoginTest {
-	WebDriver driver;
+	ThreadLocal<WebDriver> driver = new ThreadLocal<>();
 	WebDriverWait wait;
 	@BeforeMethod
 	public void setup() {
-		driver = new ChromeDriver();
-		wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-		driver.manage().window().maximize();
-		driver.get("https://the-internet.herokuapp.com/login");
+		driver.set(new ChromeDriver());
+		wait = new WebDriverWait(driver.get(), Duration.ofSeconds(10));
+		driver.get().manage().window().maximize();
+		driver.get().get("https://the-internet.herokuapp.com/login");
 	}
 	@DataProvider(name = "LoginData")
 	public Object[][] getLoginData() throws IOException {
@@ -28,9 +28,9 @@ public class DataDrivenLoginTest {
 	@Test(dataProvider = "LoginData")
 	public void loginTest(String username, String password) {
 		wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
-		driver.findElement(By.id("username")).sendKeys(username);
-		driver.findElement(By.id("password")).sendKeys(password);
-		driver.findElement(By.cssSelector("button[type='submit']")).click();
+		driver.get().findElement(By.id("username")).sendKeys(username);
+		driver.get().findElement(By.id("password")).sendKeys(password);
+		driver.get().findElement(By.cssSelector("button[type='submit']")).click();
 		String flashMessage = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("flash"))).getText();
 		if (username.equals("tomsmith") && password.equals("SuperSecretPassword!")) {
 			Assert.assertTrue(flashMessage.contains("You logged into a secure area!"),"Valid login falied");
@@ -42,6 +42,7 @@ public class DataDrivenLoginTest {
 	}
 	@AfterMethod
 	public void tearDown() {
-		driver.quit();
+		driver.get().quit();
+		driver.remove();
 	}
 }
